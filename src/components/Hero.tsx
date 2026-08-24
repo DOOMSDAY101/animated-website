@@ -1,14 +1,24 @@
 import { useGSAP } from "@gsap/react";
-import Image from "next/image";
-import Link from "next/link";
+import gsap from "gsap";
 import { SplitText } from "gsap/all";
-import { gsap } from "gsap";
+import { useRef } from "react";
+import { useMediaQuery } from "react-responsive";
 
 const Hero = () => {
-  useGSAP(() => {
-    const heroSplit = new SplitText(".title", { type: "chars, words" });
-    const paragraphSplit = new SplitText(".subtitle", { type: "lines" });
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+
+  useGSAP(() => {
+    const heroSplit = new SplitText(".title", {
+      type: "chars, words",
+    });
+
+    const paragraphSplit = new SplitText(".subtitle", {
+      type: "lines",
+    });
+
+    // Apply text-gradient class once before animating
     heroSplit.chars.forEach((char) => char.classList.add("text-gradient"));
 
     gsap.from(heroSplit.chars, {
@@ -36,62 +46,88 @@ const Hero = () => {
           scrub: true,
         },
       })
-      .to(
-        ".right-leaf",
-        {
-          y: 200,
-        },
-        0,
-      )
-      .to(
-        ".left-leaf",
-        {
-          y: -200,
-        },
-        0,
-      );
+      .to(".right-leaf", { y: 200 }, 0)
+      .to(".left-leaf", { y: -200 }, 0);
+    //   .to(".arrow", { y: 100 }, 0);
+
+    const startValue = isMobile ? "top 50%" : "center 60%";
+    const endValue = isMobile ? "120% top" : "bottom top";
+
+    let tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "video",
+        start: startValue,
+        end: endValue,
+        scrub: true,
+        pin: true,
+      },
+    });
+
+    if (videoRef.current) {
+      const video = videoRef.current;
+
+      const addVideoAnimation = () => {
+        tl.to(video, {
+          currentTime: video.duration,
+        });
+      };
+
+      if (video.readyState >= 1) {
+        addVideoAnimation();
+      } else {
+        video.onloadedmetadata = addVideoAnimation;
+      }
+    }
   }, []);
+
   return (
     <>
       <section id="hero" className="noisy">
         <h1 className="title">MOJITO</h1>
-        <Image
-          src={"/images/hero-left-leaf.png"}
-          width={100}
-          height={100}
+
+        <img
+          src="/images/hero-left-leaf.png"
           alt="left-leaf"
           className="left-leaf"
         />
-
-        <Image
-          src={"/images/hero-right-leaf.png"}
-          width={100}
-          height={100}
+        <img
+          src="/images/hero-right-leaf.png"
           alt="right-leaf"
           className="right-leaf"
         />
 
         <div className="body">
+          {/* <img src="/images/arrow.png" alt="arrow" className="arrow" /> */}
+
           <div className="content">
             <div className="space-y-5 hidden md:block">
-              <p>Cool. Crisp. Classic</p>
+              <p>Cool. Crisp. Classic.</p>
               <p className="subtitle">
-                Sip the Sprit <br /> of Summer
+                Sip the Spirit <br /> of Summer
               </p>
             </div>
 
             <div className="view-cocktails">
               <p className="subtitle">
-                Every cocktail we serve is a reflection of our obsession with
-                detail — from the first muddle to the final garnish. That care
-                is what turns a simple drink into something truly
-                memorable.{" "}
+                Every cocktail on our menu is a blend of premium ingredients,
+                creative flair, and timeless recipes — designed to delight your
+                senses.
               </p>
-              <Link href={"#cocktails"}>View Cocktails</Link>
+              <a href="#cocktails">View cocktails</a>
             </div>
           </div>
         </div>
       </section>
+
+      <div className="video absolute inset-0">
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          preload="auto"
+          src="/videos/output.mp4"
+        />
+      </div>
     </>
   );
 };
